@@ -1,0 +1,461 @@
+# LeetCode 日志
+
+## 《Hot 100》
+
+### 哈希表
+
+[1. 两数之和](https://leetcode.cn/problems/two-sum/)
+
+**思路**
+
+遍历的时候使用哈希表记录之前的值和位置，下一步直接查找key中是否存在target - nums[i]这个值，存在则取出target - nums[i]的位置，返回结果。
+
+**代码**
+
+```java
+// key: num[i]位置上的值，value：num[i]位置
+class Solution {
+  
+    public int[] twoSum(int[] nums, int target) {
+        HashMap<Integer, Integer> map = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            if (map.containsKey(target - nums[i])) {
+                return new int[]{map.get(target - nums[i]), i};
+            } else {
+                map.put(nums[i], i);
+            }
+        }
+        return new int[]{};
+    }
+  
+}
+```
+
+**复杂度**
+
+- 时间复杂度: O(N)
+- 空间复杂度: O(N)
+
+
+
+[49. 字母异位词分组](https://leetcode.cn/problems/group-anagrams/)
+
+**思路**
+
+使用哈希表，将异位词转变成一个相同的key，value是每一个key对应的异位词列表。
+
+**方法一：排序**
+
+**代码**
+
+```Java []
+
+class Solution {
+
+    // 方法一：对每一个字符串排序
+    public List<List<String>> groupAnagrams(String[] strs) {
+        HashMap<String, List<String>> map = new HashMap<>();
+        for (String str : strs) {
+            char[] chars = str.toCharArray();
+            Arrays.sort(chars);
+            // 错误：String key = chars.toString();
+            String key = new String(chars); // !API
+            List<String> list = map.getOrDefault(key, new ArrayList<String>());
+            list.add(str);
+            map.put(key, list);
+        }
+        return new ArrayList<List<String>>(map.values());
+    }
+  
+}
+```
+**复杂度**
+
+- 时间复杂度: O(N * Mlog(M))
+- 空间复杂度: O(N * M)
+
+**方法二：计数**
+
+**代码**
+
+```Java []
+
+class Solution {
+    public List<List<String>> groupAnagrams(String[] strs) {
+
+        // 方法二：对每一个字符串的字符进行计数
+        HashMap<String, List<String>> map = new HashMap<>();
+        for (String str : strs) {
+            // 记录每个字符出现的次数
+            int[] counts = new int[26]; 
+            int len = str.length();
+            for (int i = 0; i < len; i++) {
+                counts[str.charAt(i) - 'a']++;
+            }
+            StringBuilder sb = new StringBuilder();
+            // 将"abca"转换为”a2b1“作为唯一的 key
+            for (int i = 0; i < 26; i++) {
+                // 判断是否存在这个字符
+                if (counts[i] != 0) {
+                    sb.append((char)('a' + i));
+                    sb.append(counts[i]);
+                }
+            }
+            String key = sb.toString();
+            List<String> list = map.getOrDefault(key, new ArrayList<String>()); // !API
+            list.add(str);
+            map.put(key, list);
+        }
+        return new ArrayList<List<String>>(map.values()); // !API
+    }
+  
+}
+```
+
+**复杂度**
+
+- 时间复杂度: O(N * M)
+- 空间复杂度: O(N * M)
+
+### 集合
+
+[128. 最长连续序列](https://leetcode.cn/problems/longest-consecutive-sequence/)
+
+**思路**
+
+使用集合进行去重，然后从第一个元素开始累加 1，直至不连续跳出循环，更新最大值。
+
+**代码**
+
+```Java []
+
+class Solution {
+  
+    public int longestConsecutive(int[] nums) {
+        int maxLen = 0;
+        HashSet<Integer> set = new HashSet<>();
+        for (int num : nums) {
+            set.add(num);
+        }
+        for (int num : set) {
+            // 如果当前值是连续序列的起点，则继续计数
+            if (!set.contains(num - 1)) {
+                int curLen = 1;
+                while (set.contains(++num)) {
+                    curLen++;
+                }
+                maxLen = Math.max(maxLen, curLen);
+            }
+        }
+        return maxLen;
+    }
+  
+}
+```
+
+**复杂度**
+
+- 时间复杂度：O(N)
+- 空间复杂度：O(N)
+
+### 双指针
+
+[283. 移动零](https://leetcode.cn/problems/move-zeroes/description/)
+
+**思路**
+
+左指针指向已经处理好的序列的尾部的后一个元素，右指针指向待处理序列的头部，遍历一遍交换即可即可。
+
+**代码**
+
+```Java []
+
+class Solution {
+  
+    public void moveZeroes(int[] nums) {
+        int left = 0; // 左指针指向已经处理好的序列的尾部的后一个元素
+        int right = 0; // 右指针指向待处理序列的头部
+        while (right < nums.length) {
+            if (nums[right] != 0) {
+                swap(nums, left, right);
+                left++;
+            }
+            right++;
+        }
+    }
+
+    private void swap(int[] nums, int left, int right) {
+        int tmp = nums[left];
+        nums[left] = nums[right];
+        nums[right] = tmp;
+    }
+  
+}
+```
+
+**复杂度**
+
+- 时间复杂度: O(N)
+- 空间复杂度: O(1)
+
+
+
+[11. 盛最多水的容器](https://leetcode.cn/problems/container-with-most-water/description/)
+
+**思路**
+
+水的容积取决于短板，双指针进行循环收窄。
+
+<img src="img/1691907552-JmFzQO-image.png" alt="image20231111999.png" style="zoom: 20%;" />
+
+这里使用了双指针进行循环收窄的过程，每次选定两板中的短板，向内收窄一格。
+
+![image.png](img/1691907885-BsANWU-image.png)
+
+**代码**
+
+```Java []
+
+class Solution {
+  
+    public int maxArea(int[] height) {
+        int left = 0;
+        int right = height.length - 1;
+        int max = 0;
+        while (left < right) {
+            max = height[left] < height[right] ?
+                Math.max(max, (right - left) * height[left++]):
+                Math.max(max, (right - left) * height[right--]);
+        }
+        return max;
+    }
+  
+}
+```
+
+**复杂度**
+
+- 时间复杂度: O(N)
+- 空间复杂度: O(1)
+
+
+
+[15. 三数之和](https://leetcode.cn/problems/3sum/description/)
+
+**思路**
+
+三指针遍历
+
+![image.png](img/1692166827-KiksBs-image.png)
+
+使用三个指针对数组逐个遍历，注意去重的几种情况：
+
+1. i > 0 && ((nums[i] == nums[i - 1]))
+
+2. 在找到一组和为 0 的数据后，继续去重：
+    
+    - nums[right] == nums[right - 1]
+    
+    - nums[left] == nums[left + 1]
+
+**Code**
+
+```Java []
+class Solution {
+  
+    public List<List<Integer>> threeSum(int[] nums) {
+        List<List<Integer>> res = new ArrayList<>();
+        Arrays.sort(nums);
+        for (int i = 0; i < nums.length; i++) {
+            if (nums[i] > 0) {
+                return res;
+            }
+            // i 要和之前的元素比较去重
+            if (i > 0 && (nums[i] == nums[i - 1])) {
+                continue;
+            }
+            int left = i + 1;
+            int right = nums.length - 1;
+            while (left < right) {
+                int sum = nums[i] + nums[left] + nums[right];
+                if (sum < 0) {
+                    left++;
+                } else if (sum > 0) {
+                    right--;
+                } else {
+                    res.add(Arrays.asList(nums[i], nums[left], nums[right])); // !API
+                    while ((left < right) && (nums[right] == nums[right - 1])) {
+                        right--;
+                    }
+                    while ((left < right) && (nums[left] == nums[left + 1])) {
+                        left++;
+                    }
+                    right--;
+                    left++;
+                }
+            }
+        }
+        return res;
+    }
+  
+}
+```
+
+**复杂度**
+
+- 时间复杂度: O(N^2)
+- 空间复杂度: O(N)
+
+
+
+[42. 接雨水](https://leetcode.cn/problems/trapping-rain-water/description/)
+
+**思路**
+
+对于每个位置，计算它左侧最大值和右侧最大值中的较小值，然后减去当前位置的高度。这个值表示当前位置能够积累的雨水量（每个桶的容量）。
+
+<img src="img/image-20231112153559570-9774562.png" alt="image-20231112153559570" style="zoom: 67%;" />
+
+**代码**
+
+```Java []
+
+class Solution {
+
+    public int trap(int[] height) {
+        int res = 0;
+        int left = 0;
+        int right = height.length - 1;
+        int leftMax = 0;
+        int rightMax = 0;
+        while (left <= right) {
+            leftMax = Math.max(leftMax, height[left]);
+            rightMax = Math.max(rightMax, height[right]);
+            res += leftMax < rightMax ? 
+                leftMax - height[left++] : rightMax - height[right--];
+        }
+        return res;
+    }
+
+}
+```
+
+**复杂度**
+
+- 时间复杂度: O(N)
+- 空间复杂度: O(1)
+
+### 滑动窗口
+
+[3. 无重复字符的最长子串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/description/)
+
+**思路**
+
+哈希表记录该字符最近一次出现的位置，left，i为不重复的左右窗口边界，每次遍历都更新一次最大值。
+
+**代码**
+
+```Java []
+class Solution {
+  
+    public int lengthOfLongestSubstring(String s) {
+        if ((s == null) || (s.length() == 0)) {
+            return 0;
+        }
+        HashMap<Character, Integer> map = new HashMap<>();
+        int max = 0;
+        int left = 0; // left是滑动窗口的左边，i是右边
+        // map 中已经有了该字符键就更新 left 的值，不包含就更新 i 和 max 的值
+        for (int i = 0; i < s.length(); i++) {
+            if (map.containsKey(s.charAt(i))) {
+                left = Math.max(left, map.get(s.charAt(i)) + 1);
+            } 
+            map.put(s.charAt(i), i); 
+            max = Math.max(max, i - left + 1);
+        }
+        return max;
+    }
+  
+}
+```
+
+**复杂度**
+
+- 时间复杂度: O(N)
+- 空间复杂度: O(N)
+
+
+
+[438. 找到字符串中所有字母异位词](https://leetcode.cn/problems/find-all-anagrams-in-a-string/description/)
+
+**思路**
+
+通过两个数组int[26]记录每次滑动窗口内的字符数量是否相等，相等则为字母异位词。注意第一组数据的处理。
+
+在每个循环迭代中，首先更新 sCount 数组，这是通过以下步骤完成的：
+
+1. 减少窗口左侧字符的频次：sCount[s.charAt(i) - 'a']--。因为窗口的左侧将不再包含在滑动窗口内，所以对应字符的频次需要减少。
+2. 增加窗口右侧字符的频次：sCount[s.charAt(i + pLen) - 'a']++。新加入窗口的字符需要增加频次。
+
+随后，代码检查更新后的 sCount 是否与 pCount 相等，如果相等，说明窗口内的字符频次与字符串 p 的字符频次相同，也就是窗口内的子串是 p 的字母异位词。此时，将当前窗口的起始索引 i + 1 加入到结果列表中。
+
+**代码**
+
+```Java []
+
+class Solution {
+  
+    public List<Integer> findAnagrams(String s, String p) {
+        int sLen = s.length();
+        int pLen = p.length();
+
+        if (sLen < pLen) {
+            return new ArrayList<Integer>();
+        }
+
+        ArrayList<Integer> res = new ArrayList<Integer>();
+        int[] sCount = new int[26];
+        int[] pCount = new int[26];
+
+        for (int i = 0; i < pLen; i++) {
+            sCount[s.charAt(i) - 'a']++;
+            pCount[p.charAt(i) - 'a']++;
+        }
+
+        if (Arrays.equals(sCount, pCount)) {
+            res.add(0);
+        }
+
+        for (int i = 0; i < sLen - pLen; i++) {
+            sCount[s.charAt(i) - 'a']--;
+            sCount[s.charAt(i + pLen) - 'a']++; // 右窗口移动
+
+            if (Arrays.equals(sCount, pCount)) {
+                res.add(i + 1);
+            }
+        }
+        return res;
+    }
+  
+}
+```
+
+**复杂度**
+
+- 时间复杂度: O(M + N)
+- 空间复杂度: O(1)
+
+
+
+
+
+## 《剑指offer》
+
+## 《代码随想录》
+
+## 《编程之美》
+
+## 《计算之魂》
+
+## 《持续练习》
+
