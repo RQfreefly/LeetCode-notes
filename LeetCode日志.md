@@ -445,6 +445,190 @@ class Solution {
 - 时间复杂度: O(M + N)
 - 空间复杂度: O(1)
 
+### 字串
+
+[560. 和为 K 的子数组](https://leetcode.cn/problems/subarray-sum-equals-k/description/)
+
+**思路**
+
+pre[i] − pre[j − 1] == k => pre[j − 1] == pre[i] − k
+
+**代码**
+
+```Java []
+class Solution {
+  
+    // pre[i] − pre[j − 1] == k —> pre[j − 1] == pre[i] − k
+    public int subarraySum(int[] nums, int k) {
+        int count = 0;
+        int pre = 0;
+        HashMap<Integer, Integer> map = new HashMap<>(); // 记录前缀和的数量
+        map.put(0, 1); // !初始化
+        for (int num : nums) {
+            pre += num;
+            if (map.containsKey(pre - k)) {
+                count += map.get(pre - k);
+            }
+            map.put(pre, map.getOrDefault(pre, 0) + 1);
+        }
+        return count;
+    }
+  
+}
+```
+
+复杂度
+
+- 时间复杂度: O(N)
+- 空间复杂度: O(N)
+
+
+
+[239. 滑动窗口最大值](https://leetcode.cn/problems/sliding-window-maximum/description/)
+
+**思路**
+
+使用固定容量的单调队列收集每一个滑动窗口的最大值。
+
+<img src="img/1699862617-fSZnHF-image.png" alt="image.png" style="zoom:50%;" />
+
+**代码**
+
+```Java []
+// 单调队列
+class Solution {
+  
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        int n = nums.length;
+        int[] res = new int[n - k + 1];
+        Deque<Integer> deque = new LinkedList<>();
+        for (int i = 0; i < n; i++) {
+            // 添加元素时，如果要添加的元素大于队尾处的元素，就将队尾元素弹出
+            while (!deque.isEmpty() && (nums[i] >= nums[deque.peekLast()])) {
+                deque.pollLast();
+            }
+            deque.offerLast(i);
+            // 如果队首存储的角标就是滑动窗口左边界数值，就移除队首
+            if (!deque.isEmpty() && ((i - k) == deque.peekFirst())) {
+                deque.pollFirst();
+            }
+            // 当i增长到第一个窗口右边界时，每滑动一步都将队首角标对应的元素放入到结果数组
+            if (i >= k - 1) {
+                res[i - k + 1] = nums[deque.peekFirst()];
+            }
+        }
+        return res;
+    }
+  
+}
+
+```
+
+**复杂度**
+
+- 时间复杂度: O(N)
+- 空间复杂度: O(N)
+
+
+
+```Java []
+// 使用优先队列（大根堆）
+class Solution {
+  
+    public int[] maxSlidingWindow(int[] nums, int k) {
+        int n = nums.length;
+        // 设定优先队列的排序顺序：
+        // 如果 pair1 和 pair2 的第一个元素不相等 (pair1[0] != pair2[0])，则按照第一个元素降序排列，即 pair2[0] - pair1[0]。
+        // 如果 pair1 和 pair2 的第一个元素相等，则按照第二个元素降序排列，即 pair2[1] - pair1[1]，保证稳定性。
+        PriorityQueue<int[]> priorityQueue = new PriorityQueue<>(
+            (pair1, pair2) -> pair1[0] != pair2[0] ? pair2[0] - pair1[0] : pair2[1] - pair1[1]);
+        for (int i = 0; i < k; i++) {
+            priorityQueue.offer(new int[]{nums[i], i});
+        }
+        int[] res = new int[n - k + 1];
+        res[0] = priorityQueue.peek()[0];
+        for (int i = k; i < n; i++) {
+            // 保持窗口大小，移除超出窗口范围的元素
+            priorityQueue.offer(new int[]{nums[i], i});
+            while (priorityQueue.peek()[1] <= i - k) {
+                priorityQueue.poll();
+            }
+            res[i - k + 1] = priorityQueue.peek()[0];
+        }
+        return res;
+    }
+  
+}
+```
+
+
+
+[76. 最小覆盖子串](https://leetcode.cn/problems/minimum-window-substring/description/)
+
+**思路**
+
+使用滑动窗口双指针遍历字符串，使用count标识当次遍历中还需要几个字符才能够满足包含t中所有字符的条件。
+
+步骤一：不断增加j使滑动窗口增大，直到窗口包含了T的所有元素。
+
+步骤二：不断增加i使滑动窗口缩小，因为是要求最小字串，所以将不必要的元素排除在外，使长度减小，直到碰到一个必须包含的元素，这个时候不能再扔了，再扔就不满足条件了，记录此时滑动窗口的长度，并保存最小值。
+
+步骤三：让i再增加一个位置，这个时候滑动窗口肯定不满足条件了，那么继续从步骤一开始执行，寻找新的满足条件的滑动窗口，如此反复，直到j超出了字符串S范围。
+
+<img src="img/1693208998-WWbNFQ-image.png" alt="image.png" style="zoom:67%;" />
+
+**代码**
+
+```Java []
+class Solution {
+  
+    public String minWindow(String s, String t) {
+        if (s == null || s.length() == 0 || t == null || t.length() == 0) {
+            return "";
+        }
+        int[] need = new int[128];
+        for (int i = 0; i < t.length(); i++) {
+            need[t.charAt(i)]++;
+        }
+        int l = 0, r = 0, size = Integer.MAX_VALUE, count = t.length(), start = 0;
+        while (r < s.length()) {
+            char c = s.charAt(r);
+            if (need[c] > 0) {
+                count--;
+            }
+            need[c]--;
+            // count == 0说明当前的窗口已经满足了包含t所需所有字符的条件
+            if (count == 0) {
+                // 如果左边界这个字符对应的值在need[]数组中小于0，说明他是一个多余元素，不包含在t内
+                while (l < r && need[s.charAt(l)] < 0) {
+                    need[s.charAt(l)]++;
+                    l++; // 左边界向右移，过滤掉这个元素
+                }
+                // 如果当前的这个窗口值比之前维护的窗口值更小，需要进行更新
+                if (r - l + 1 < size) {
+                    size = r - l + 1;
+                    start = l;
+                }
+                need[s.charAt(l)]++; // 先将l位置的字符计数重新加1
+                // 重新维护左边界值和当前所需字符的值count 
+                l++;
+                count++;
+            }
+            r++;
+        }
+        return size == Integer.MAX_VALUE ? "" : s.substring(start, start + size); // !API
+    }
+  
+}
+```
+
+**复杂度**
+
+- 时间复杂度: O(N)
+- 空间复杂度: O(1)
+
+
+
 
 
 
